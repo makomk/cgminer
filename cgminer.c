@@ -2381,7 +2381,9 @@ static void *get_work_thread(void *userdata)
 	applog(LOG_DEBUG, "Creating extra get work thread");
 
 	utility = total_accepted / ( total_secs ? total_secs : 1 ) * 60;
-	maxq = opt_queue + mining_threads + utility;
+	maxq = opt_queue + mining_threads;
+	if (utility > maxq)
+		maxq = utility;
 	mutex_lock(&qd_lock);
 	cq = __pool_queued(pool);
 	tq = __global_queued();
