@@ -2368,7 +2368,7 @@ static bool clone_available(void)
 static void *get_work_thread(void *userdata)
 {
 	struct workio_cmd *wc = (struct workio_cmd *)userdata;
-	int cq, cs, ts, tq, maxq = opt_queue + mining_threads;
+	int cq, cs, ts, tq, maxq = opt_queue + (mining_threads * 4 / 3);
 	struct pool *pool = current_pool();
 	struct curl_ent *ce = NULL;
 	struct work *ret_work;
@@ -2391,9 +2391,10 @@ static void *get_work_thread(void *userdata)
 
 	if (!ts)
 		lagging = true;
-	else if (((cs || cq >= opt_queue) && ts >= maxq) ||
-		 ((cs || cq) && tq >= maxq) || clone_available())
-			goto out;
+	if (((cs >= opt_queue || cq >= opt_queue) && ts >= maxq) ||
+	    ((cs >= opt_queue || cq >= opt_queue) && tq >= maxq) ||
+	    clone_available())
+		goto out;
 
 	ret_work = make_work();
 	if (wc->thr)
