@@ -2368,24 +2368,17 @@ static bool clone_available(void)
 static void *get_work_thread(void *userdata)
 {
 	struct workio_cmd *wc = (struct workio_cmd *)userdata;
+	int cq, cs, ts, tq, maxq = opt_queue + mining_threads;
 	struct pool *pool = current_pool();
 	struct curl_ent *ce = NULL;
-	int cq, cs, ts, tq, maxq;
 	struct work *ret_work;
 	bool lagging = false;
 	int failures = 0;
-	double utility;
-	int u3;
 
 	pthread_detach(pthread_self());
 
 	applog(LOG_DEBUG, "Creating extra get work thread");
 
-	utility = total_accepted / ( total_secs ? total_secs : 1 ) * 60;
-	u3 = utility / 3;
-	maxq = opt_queue + mining_threads;
-	if (u3 > maxq)
-		maxq = u3;
 	mutex_lock(&qd_lock);
 	cq = __pool_queued(pool);
 	tq = __global_queued();
