@@ -2285,27 +2285,6 @@ static int global_queued(void)
 	return ret;
 }
 
-static bool enough_work(void)
-{
-	int cq, cs, ts, tq, maxq = opt_queue + mining_threads;
-	struct pool *pool = current_pool();
-
-	mutex_lock(&qd_lock);
-	cq = __pool_queued(pool);
-	tq = __global_queued();
-	mutex_unlock(&qd_lock);
-
-	mutex_lock(stgd_lock);
-	cs = __pool_staged(pool);
-	ts = __total_staged();
-	mutex_unlock(stgd_lock);
-
-	if (((cs || cq >= opt_queue) && ts >= maxq) ||
-	    ((cs || cq) && tq >= maxq))
-		return true;
-	return false;
-}
-
 /* ce and pool may appear uninitialised at push_curl_entry, but they're always
  * set when we don't have opt_benchmark enabled */
 static void *get_work_thread(void *userdata)
@@ -2319,9 +2298,6 @@ static void *get_work_thread(void *userdata)
 	pthread_detach(pthread_self());
 
 	applog(LOG_DEBUG, "Creating extra get work thread");
-
-	if (!wc->lagging && enough_work())
-		goto out;
 
 	ret_work = make_work();
 	if (wc->thr)
@@ -3835,7 +3811,7 @@ bool queue_request(struct thr_info *thr, bool needed)
 	ts = __total_staged();
 	mutex_unlock(stgd_lock);
 
-	if (needed && cq >= maxq && !ts && !opt_fail_only) {
+	if (needed && !ts && !opt_fail_only) {
 		/* If we're queueing work faster than we can stage it, consider
 		 * the system lagging and allow work to be gathered from
 		 * another pool if possible */
