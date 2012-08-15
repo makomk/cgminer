@@ -2375,15 +2375,17 @@ static void *get_work_thread(void *userdata)
 	bool lagging = false;
 	int failures = 0;
 	double utility;
+	int u3;
 
 	pthread_detach(pthread_self());
 
 	applog(LOG_DEBUG, "Creating extra get work thread");
 
 	utility = total_accepted / ( total_secs ? total_secs : 1 ) * 60;
+	u3 = utility / 3;
 	maxq = opt_queue + mining_threads;
-	if (utility > maxq)
-		maxq = utility;
+	if (u3 > maxq)
+		maxq = u3;
 	mutex_lock(&qd_lock);
 	cq = __pool_queued(pool);
 	tq = __global_queued();
