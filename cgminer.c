@@ -4275,8 +4275,6 @@ void *miner_thread(void *userdata)
 	int64_t hashes_done = 0;
 	int64_t hashes;
 	struct work *work = make_work();
-	const time_t request_interval = opt_scantime * 2 / 3 ? : 1;
-	unsigned const long request_nonce = MAXTHREADS / 3 * 2;
 	bool requested = false;
 	const bool primary = (!mythr->device_thread) || mythr->primary_thread;
 
