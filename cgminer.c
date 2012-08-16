@@ -2426,9 +2426,9 @@ static void *get_work_thread(void *userdata)
 	if (opt_benchmark)
 		get_benchmark_work(ret_work);
 	else {
-		bool lagging;
+		bool lagging = false;
 
-		if (!ts && tq >= maxq)
+		if (ts <= opt_queue)
 			lagging = true;
 		pool = ret_work->pool = select_pool(lagging);
 		inc_queued(pool);
