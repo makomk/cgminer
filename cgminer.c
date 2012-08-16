@@ -2388,11 +2388,12 @@ out:
 static void *get_work_thread(void *userdata)
 {
 	struct workio_cmd *wc = (struct workio_cmd *)userdata;
-	int cq, cs, ts, tq, maxq = opt_queue + mining_threads;
+	int cq, cs, ts, tq, maxq;
 	struct pool *pool = current_pool();
 	struct curl_ent *ce = NULL;
 	struct work *ret_work;
 	int failures = 0;
+	double util3;
 
 	pthread_detach(pthread_self());
 
@@ -2408,6 +2409,10 @@ static void *get_work_thread(void *userdata)
 	ts = __total_staged();
 	mutex_unlock(stgd_lock);
 
+	util3 = total_accepted / total_secs * 60 / 3;
+	maxq = opt_queue + mining_threads;
+	if (util3 > maxq)
+		maxq = util3;
 	if (ts >= maxq)
 		goto out;
 
