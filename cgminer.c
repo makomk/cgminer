@@ -2411,7 +2411,7 @@ static void *get_work_thread(void *userdata)
 	if (ts >= maxq)
 		goto out;
 
-	if (ts >= opt_queue && tq >= maxq)
+	if (ts >= opt_queue && tq >= maxq - 1)
 		goto out;
 
 	if (clone_available())
@@ -2428,7 +2428,7 @@ static void *get_work_thread(void *userdata)
 	else {
 		bool lagging;
 
-		if (!ts)
+		if (!ts && tq >= maxq)
 			lagging = true;
 		pool = ret_work->pool = select_pool(lagging);
 		inc_queued(pool);
