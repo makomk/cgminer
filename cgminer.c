@@ -2200,7 +2200,7 @@ static void recruit_curl(struct pool *pool)
  * network delays/outages. */
 static struct curl_ent *pop_curl_entry(struct pool *pool)
 {
-	int curl_limit = opt_delaynet ? 5 : mining_threads * 2;
+	int curl_limit = opt_delaynet ? 5 : mining_threads * 4 / 3;
 	struct curl_ent *ce;
 
 	mutex_lock(&pool->pool_lock);
@@ -2388,12 +2388,11 @@ out:
 static void *get_work_thread(void *userdata)
 {
 	struct workio_cmd *wc = (struct workio_cmd *)userdata;
-	int cq, cs, ts, tq, maxq;
+	int cq, cs, ts, tq, maxq = opt_queue + mining_threads;
 	struct pool *pool = current_pool();
 	struct curl_ent *ce = NULL;
 	struct work *ret_work;
 	int failures = 0;
-	double util3;
 
 	pthread_detach(pthread_self());
 
@@ -2409,10 +2408,6 @@ static void *get_work_thread(void *userdata)
 	ts = __total_staged();
 	mutex_unlock(stgd_lock);
 
-	util3 = total_accepted / total_secs * 60 / 3;
-	maxq = opt_queue + mining_threads;
-	if (util3 > maxq)
-		maxq = util3;
 	if (ts >= maxq)
 		goto out;
 
