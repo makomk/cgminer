@@ -532,6 +532,15 @@ static bool icarus_detect_one(const char *devpath)
 	}
 
 	hex2bin(ob_bin, golden_ob, sizeof(ob_bin));
+	// FIXME - code duplication
+	switch(work_division) {
+	case 1:	 ob_bin[51] = 0x01; break;
+	case 2:  ob_bin[51] = 0x81; break;
+	case 4:  ob_bin[51] = 0xc1; break;
+	case 8:  ob_bin[51] = 0xe1; break;
+	case 16: ob_bin[51] = 0xf1; break;
+	default: break;
+	}
 	icarus_write(fd, ob_bin, sizeof(ob_bin));
 	gettimeofday(&tv_start, NULL);
 
@@ -656,12 +665,21 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 
 	icarus = thr->cgpu;
 	fd = icarus->device_fd;
+	info = icarus_info[icarus->device_id];
 
 	memset(ob_bin, 0, sizeof(ob_bin));
 	memcpy(ob_bin, work->midstate, 32);
 	memcpy(ob_bin + 52, work->data + 64, 12);
 	rev(ob_bin, 32);
 	rev(ob_bin + 52, 12);
+	switch(info->work_division) {
+	case 1:	 ob_bin[51] = 0x01; break;
+	case 2:  ob_bin[51] = 0x81; break;
+	case 4:  ob_bin[51] = 0xc1; break;
+	case 8:  ob_bin[51] = 0xe1; break;
+	case 16: ob_bin[51] = 0xf1; break;
+	default: break;
+	}
 #ifndef WIN32
 	tcflush(fd, TCOFLUSH);
 #endif
@@ -682,7 +700,6 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 
 	/* Icarus will return 4 bytes (ICARUS_READ_SIZE) nonces or nothing */
 	memset(nonce_bin, 0, sizeof(nonce_bin));
-	info = icarus_info[icarus->device_id];
 	ret = icarus_gets(nonce_bin, fd, &tv_finish, thr, info->read_count);
 
 	work->blk.nonce = 0xffffffff;
